@@ -3,47 +3,52 @@ import random
 import string
 from random import randint
 
-# def projNum_generator():
-#   return ''.join(random.choice(string.digits) for _ in range(10))
-
-projarr = []
+projectNumbers = []
+users = [] 
 
 def projNum_generator():
   i = 1
   while i < 15001:
-    projarr.append(str(i).zfill(10))
+    projectNumbers.append(str(i).zfill(10))
     i += 1
 
-  return projarr
+  return projectNumbers
 
 def getRandomProjNum(arr):
   return arr[int(random.uniform(0,1)*15000)]
 
-
 def user_generator():
   userchars = string.ascii_lowercase + string.digits
-  return ''.join(random.choice(userchars) for _ in range(8))
+  i = 1
+  while i < 3001:
+    users.append("user" + str(i))
+    i += 1
+  return users
+
+def getRandomUser(arr):
+  return arr[int(random.uniform(0,1)*3000)]
 
 def week_generator():
   return str(random.randint(1,52))
 
 def time_generator():
-  return str(round(random.uniform(0, 9.9), 1))
+  return str(round(random.uniform(1, 8), 1))
 
 def createRow():
   week = week_generator()
-  user = user_generator()
+  user = getRandomUser(theUsers)
   mon = time_generator()
   tue = time_generator()
   wed = time_generator()
   thu = time_generator()
   fri = time_generator()
-  projNum = getRandomProjNum(theArray)
+  projNum = getRandomProjNum(theProjnums)
   
   row = (week, user, mon, tue, wed, thu, fri, projNum)
   return row
 
-theArray = projNum_generator()
+theProjnums = projNum_generator()
+theUsers = user_generator()
 
 
 
