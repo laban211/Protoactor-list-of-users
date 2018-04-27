@@ -35,8 +35,12 @@ func check(e error) {
 }
 
 func main() {
+	// Create an actor
 	props := actor.FromProducer(func() actor.Actor { return &messageActor{} })
 	pid := actor.Spawn(props)
+
+	// A map for storing actors
+	// hash := make(map[int]messageActor)
 
 	// Reading from file
 	file, err := os.Open("text.csv")
