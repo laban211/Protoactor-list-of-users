@@ -3,8 +3,18 @@ import random
 import string
 from random import randint
 
+# def projNum_generator():
+#   return ''.join(random.choice(string.digits) for _ in range(10))
+
+projarr = []
+
 def projNum_generator():
-  return ''.join(random.choice(string.digits) for _ in range(10))
+  i = 1
+  while i < 15001:
+    projarr.append(str(i).zfill(10))
+    i += 1
+
+  return projarr[int(random.uniform(0, 1) * 15000)]
 
 def user_generator():
   userchars = string.ascii_lowercase + string.digits
