@@ -14,7 +14,11 @@ def projNum_generator():
     projarr.append(str(i).zfill(10))
     i += 1
 
-  return projarr[int(random.uniform(0, 1) * 15000)]
+  return projarr
+
+def getRandomProjNum(arr):
+  return arr[int(random.uniform(0,1)*15000)]
+
 
 def user_generator():
   userchars = string.ascii_lowercase + string.digits
@@ -34,10 +38,14 @@ def createRow():
   wed = time_generator()
   thu = time_generator()
   fri = time_generator()
-  projNum = projNum_generator()
+  projNum = getRandomProjNum(theArray)
   
   row = (week, user, mon, tue, wed, thu, fri, projNum)
   return row
+
+theArray = projNum_generator()
+
+
 
 with open('text.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile, dialect='excel')
