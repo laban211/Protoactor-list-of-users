@@ -20,11 +20,14 @@ import (
 // 	projNum int
 // }
 
-type listRow2 struct {
+type listRow struct {
 	row string
 }
 
 type messageActor struct{}
+
+var receiveCounter int
+var sentCounter int
 
 func (state *messageActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
@@ -32,8 +35,11 @@ func (state *messageActor) Receive(context actor.Context) {
 	// 	fmt.Printf("%v \t %v \t %v \t %v \t %v \t %v \t %v \t %v \n",
 	// 		msg.week, msg.user, msg.mon, msg.tue, msg.wed, msg.thu,
 	// 		msg.fri, msg.projNum)
-	case *listRow2:
-		fmt.Println(msg.row)
+	case *listRow:
+		receiveCounter++
+		if receiveCounter%50000 == 0 {
+			fmt.Println(receiveCounter, msg.row)
+		}
 	}
 }
 
@@ -58,11 +64,20 @@ func main() {
 
 	for scanner.Scan() {
 		// fmt.Println(scanner.Text())
-		pid.Tell(&listRow2{row: scanner.Text()})
+		pid.Tell(&listRow{row: scanner.Text()})
+		sentCounter++
 	}
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
+	}
+
+	fmt.Println("Allt är skickat!")
+	fmt.Scanln()
+	fmt.Printf("Sent: %v\nReceived: %v", sentCounter, receiveCounter)
+	if sentCounter == receiveCounter {
+		println("\nAlla skickade paket togs emot!")
+	} else {
+		println("\nNågonting gick fel >:(")
 	}
 
 	// for {
