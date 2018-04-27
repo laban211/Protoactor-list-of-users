@@ -9,31 +9,22 @@ import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
-// type listRow struct {
-// 	week    int
-// 	user    string
-// 	mon     float32
-// 	tue     float32
-// 	wed     float32
-// 	thu     float32
-// 	fri     float32
-// 	projNum int
-// }
-
-type listRow2 struct {
+type listRow struct {
 	row string
 }
 
 type messageActor struct{}
 
+var receiveCounter int
+var sentCounter int
+
 func (state *messageActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
-	// case *listRow:
-	// 	fmt.Printf("%v \t %v \t %v \t %v \t %v \t %v \t %v \t %v \n",
-	// 		msg.week, msg.user, msg.mon, msg.tue, msg.wed, msg.thu,
-	// 		msg.fri, msg.projNum)
-	case *listRow2:
-		fmt.Println(msg.row)
+	case *listRow:
+		receiveCounter++
+		if receiveCounter%50000 == 0 {
+			fmt.Println(receiveCounter, msg.row)
+		}
 	}
 }
 
@@ -58,36 +49,20 @@ func main() {
 
 	for scanner.Scan() {
 		// fmt.Println(scanner.Text())
-		pid.Tell(&listRow2{row: scanner.Text()})
+		pid.Tell(&listRow{row: scanner.Text()})
+		sentCounter++
 	}
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 
-	// for {
-	// 	line, _, err := reader.ReadLine()
+	fmt.Println("Allt är skickat!")
+	fmt.Scanln()
+	fmt.Printf("Sent: %v\nReceived: %v", sentCounter, receiveCounter)
+	if sentCounter == receiveCounter {
+		println("\nAlla skickade paket togs emot!")
+	} else {
+		println("\nNågonting gick fel >:(")
+	}
 
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-
-	// 	pid.Tell(&listRow2{row: string(line)})
-	// }
-
-	//fmt.Println(dat) // Print the content as 'bytes'
-	// str := string(file)
-	// fmt.Println(str) // Print the content as 'string'
-
-	// pid.Tell(&listRow{
-	// 	week:    3,
-	// 	user:    "Daniel",
-	// 	mon:     4,
-	// 	tue:     3,
-	// 	wed:     2,
-	// 	thu:     8,
-	// 	fri:     1,
-	// 	projNum: 1234567890,
-	// })
-	// console.ReadLine()
 }
