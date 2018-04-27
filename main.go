@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
@@ -13,17 +14,25 @@ type listRow struct {
 	row string
 }
 
-type messageActor struct{}
+type messageActor struct {
+	localCounter int
+}
 
 var receiveCounter int
 var sentCounter int
+var createdKeys int
 
 func (state *messageActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *listRow:
-		receiveCounter++
-		if receiveCounter%50000 == 0 {
-			fmt.Println(receiveCounter, msg.row)
+		// receiveCounter++
+		// if receiveCounter%50000 == 0 {
+		// 	splitted := strings.Split(msg.row, ",")
+		// 	fmt.Println(receiveCounter, splitted[7])
+		// }
+		state.localCounter++
+		if state.localCounter == 2 {
+			fmt.Printf("\n + %v \n", msg.row)
 		}
 	}
 }
@@ -37,10 +46,10 @@ func check(e error) {
 func main() {
 	// Create an actor
 	props := actor.FromProducer(func() actor.Actor { return &messageActor{} })
-	pid := actor.Spawn(props)
+	//pid := actor.Spawn(props)
 
 	// A map for storing actors
-	// hash := make(map[int]messageActor)
+	hash := make(map[string]*actor.PID)
 
 	// Reading from file
 	file, err := os.Open("text.csv")
@@ -52,8 +61,20 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
-		// fmt.Println(scanner.Text())
-		pid.Tell(&listRow{row: scanner.Text()})
+		projNum := strings.Split(scanner.Text(), ",")[7]
+
+		//if not exist
+		value, ok := hash[projNum]
+		if ok {
+			fmt.Printf("%v exist ", value)
+		} else {
+			createdKeys++
+			hash[projNum] = actor.Spawn(props) //Vill deklarera med new()
+		}
+
+		hash[projNum].Tell(&listRow{row: scanner.Text()})
+
+		//pid.Tell(&listRow{row: scanner.Text()})
 		sentCounter++
 	}
 	if err := scanner.Err(); err != nil {
@@ -63,6 +84,7 @@ func main() {
 	fmt.Println("Allt är skickat!")
 	fmt.Scanln()
 	fmt.Printf("Sent: %v\nReceived: %v", sentCounter, receiveCounter)
+	fmt.Printf("\nCreated keys: %v", createdKeys)
 	if sentCounter == receiveCounter {
 		println("\nAlla skickade paket togs emot!")
 	} else {
