@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
@@ -23,7 +24,8 @@ func (state *messageActor) Receive(context actor.Context) {
 	case *listRow:
 		receiveCounter++
 		if receiveCounter%50000 == 0 {
-			fmt.Println(receiveCounter, msg.row)
+			splitted := strings.Split(msg.row, ",")
+			fmt.Println(receiveCounter, splitted[7])
 		}
 	}
 }
