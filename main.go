@@ -18,20 +18,14 @@ type messageActor struct {
 	localCounter int
 }
 
-var receiveCounter int
 var sentCounter int
 var createdKeys int
 
 func (state *messageActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *listRow:
-		// receiveCounter++
-		// if receiveCounter%50000 == 0 {
-		// 	splitted := strings.Split(msg.row, ",")
-		// 	fmt.Println(receiveCounter, splitted[7])
-		// }
 		state.localCounter++
-		if state.localCounter == 2 {
+		if state.localCounter == 40 {
 			fmt.Printf("\n + %v \n", msg.row)
 		}
 	}
@@ -57,7 +51,6 @@ func main() {
 
 	defer file.Close()
 
-	// reader := bufio.NewReader(file)
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -65,14 +58,13 @@ func main() {
 
 		//if not exist
 		value, ok := hash[projNum]
-		if ok {
-			fmt.Printf("%v exist ", value)
-		} else {
+		if !ok {
 			createdKeys++
-			hash[projNum] = actor.Spawn(props) //Vill deklarera med new()
+			value = actor.Spawn(props) //Vill deklarera med new()
+			hash[projNum] = value
 		}
 
-		hash[projNum].Tell(&listRow{row: scanner.Text()})
+		value.Tell(&listRow{row: scanner.Text()})
 
 		//pid.Tell(&listRow{row: scanner.Text()})
 		sentCounter++
@@ -83,12 +75,7 @@ func main() {
 
 	fmt.Println("Allt är skickat!")
 	fmt.Scanln()
-	fmt.Printf("Sent: %v\nReceived: %v", sentCounter, receiveCounter)
+	fmt.Printf("Sent: %v", sentCounter)
 	fmt.Printf("\nCreated keys: %v", createdKeys)
-	if sentCounter == receiveCounter {
-		println("\nAlla skickade paket togs emot!")
-	} else {
-		println("\nNågonting gick fel >:(")
-	}
 
 }
