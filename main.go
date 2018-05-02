@@ -31,11 +31,11 @@ func (state *messageActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 	case *listRow:
 		state.localCounter++
-		if state.localCounter == 40 {
-			fmt.Printf("\n + %v \n", msg.row)
+		if state.localCounter > 100 {
+			fmt.Printf("\n%v\n", msg.row)
 		}
 	case *askForRows:
-		fmt.Println("hej")
+		// fmt.Println("hej")
 		context.Respond(state.localCounter)
 	}
 }
@@ -47,9 +47,10 @@ func check(e error) {
 }
 
 func main() {
+	println("Skickar...\n")
+
 	// Create an actor
 	props := actor.FromProducer(func() actor.Actor { return &messageActor{} })
-	//pid := actor.Spawn(props)
 
 	// A map for storing actors
 	hash := make(map[string]*actor.PID)
@@ -69,35 +70,24 @@ func main() {
 		value, ok := hash[projNum]
 		if !ok {
 			createdKeys++
-			value = actor.Spawn(props) //Vill deklarera med new()
+			value = actor.Spawn(props)
 			hash[projNum] = value
 		}
 
 		value.Tell(&listRow{row: scanner.Text()})
 
-		//pid.Tell(&listRow{row: scanner.Text()})
 		sentCounter++
 	}
-	fmt.Println("hit1")
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("hit2")
 	for _, value := range hash {
-		fmt.Println("hit3")
 		result, _ := value.RequestFuture(&askForRows{test: 1}, 30*time.Second).Result() // await result
-		var intresult int
-		var ok bool
-		intresult, ok = result.(int)
-		if ok {
-			receivedCounter += intresult
-		}
+		receivedCounter += result.(int)
 	}
 
 	fmt.Println("Allt är skickat!")
-	fmt.Scanln()
-	fmt.Printf("Sent: %v", sentCounter)
-	fmt.Printf("\nCreated keys: %v", createdKeys)
-	fmt.Printf("received: %v", receivedCounter)
-
+	// fmt.Scanln()
+	fmt.Printf("Sent: %v\nCreated keys: %v\nReceived: %v",
+		sentCounter, createdKeys, receivedCounter)
 }
