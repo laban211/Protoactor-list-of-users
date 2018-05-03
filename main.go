@@ -29,24 +29,24 @@ var sentCounter int
 func (state *mainRouter) Receive(context actor.Context) {
 	projects := actor.FromProducer(newProjectActor)
 	users := actor.FromProducer(newUserActor)
-	childActors := make(map[string]*actor.PID)
+	children := make(map[string]*actor.PID)
 
-	foundProjectActor, ok := childActors["projects"]
+	foundProjectManager, ok := children["projects"]
 	if !ok {
-		foundProjectActor = actor.Spawn(projects)
-		childActors["projects"] = foundProjectActor
+		foundProjectManager = actor.Spawn(projects)
+		children["projects"] = foundProjectManager
 	}
 
-	foundUserActor, ok := childActors["users"]
+	foundUserManager, ok := children["users"]
 	if !ok {
-		foundUserActor = actor.Spawn(users)
-		childActors["users"] = foundUserActor
+		foundUserManager = actor.Spawn(users)
+		children["users"] = foundUserManager
 	}
 
 	switch msg := context.Message().(type) {
 	case *listRow:
-		childActors["projects"].Tell(msg)
-		childActors["users"].Tell(msg)
+		children["projects"].Tell(msg)
+		children["users"].Tell(msg)
 	default:
 		fmt.Print("Something went wrong >:((")
 	}
