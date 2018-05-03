@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
@@ -14,9 +14,11 @@ type listRow struct {
 	row string
 }
 
-type mainActor struct{}
+type mainRouter struct{}
 type projectManager struct{}
 type userManager struct{}
+type projectActor struct{}
+type userActor struct{}
 
 // type messageActor struct {
 // 	localCounter int
@@ -43,39 +45,71 @@ var receivedCounter int
 // 	}
 // }
 
-func (state *mainActor) Receive(context actor.Context) {
+func (state *mainRouter) Receive(context actor.Context) {
 	//Hur deklarerar jag en actor?
-	project := actor.FromProducer(newProjectActor)
-	user := actor.FromProducer(newUserActor)
+	projects := actor.FromProducer(newProjectActor)
+	users := actor.FromProducer(newUserActor)
 	childActors := make(map[string]*actor.PID)
 
-	foundProjectActor, ok := childActors["project"]
+	foundProjectActor, ok := childActors["projects"]
 	if !ok {
-		foundProjectActor = actor.Spawn(project)
-		childActors["project"] = foundProjectActor
+		foundProjectActor = actor.Spawn(projects)
+		childActors["projects"] = foundProjectActor
 	}
 
-	foundUserActor, ok := childActors["user"]
+	foundUserActor, ok := childActors["users"]
 	if !ok {
-		foundUserActor = actor.Spawn(user)
-		childActors["user"] = foundUserActor
+		foundUserActor = actor.Spawn(users)
+		childActors["users"] = foundUserActor
 	}
 
 	switch msg := context.Message().(type) {
 	case *listRow:
 		//tell them what to do
-		childActors["project"].Tell(msg)
-		childActors["user"].Tell(msg)
+		childActors["projects"].Tell(msg)
+		childActors["users"].Tell(msg)
 	default:
-		fmt.Print("Something went wrong >:(")
+		fmt.Print("Something went wrong >:((")
 	}
 }
 
 func (state *projectManager) Receive(context actor.Context) {
+	props := actor.FromProducer(func() actor.Actor { return &projectActor{} })
+	actors := make(map[string]*actor.PID)
+	switch msg := context.Message().(type) {
+	case *listRow:
+		//Split
+		projNum := strings.Split(msg.row, ",")[7]
+		foundActor, ok := actors[projNum]
+		if !ok {
+			foundActor = actor.Spawn(props)
+			actors[projNum] = foundActor
+		}
+		foundActor.Tell(msg)
+	}
+}
+
+func (state *projectActor) Receive(context actor.Context) {
 
 }
 
 func (state *userManager) Receive(context actor.Context) {
+	props := actor.FromProducer(func() actor.Actor { return &userActor{} })
+	users := make(map[string]*actor.PID)
+	switch msg := context.Message().(type) {
+	case *listRow:
+		//Split
+		userID := strings.Split(msg.row, ",")[1]
+		foundUser, ok := users[userID]
+		if !ok {
+			foundUser = actor.Spawn(props)
+			users[userID] = foundUser
+		}
+		foundUser.Tell(msg)
+	}
+}
+
+func (state *userActor) Receive(context actor.Context) {
 
 }
 
@@ -86,7 +120,7 @@ func check(e error) {
 }
 
 func newParentActor() actor.Actor {
-	return &mainActor{}
+	return &mainRouter{}
 }
 
 func newProjectActor() actor.Actor {
@@ -102,7 +136,7 @@ func main() {
 
 	// Create an actor
 	// props := actor.FromProducer(func() actor.Actor { return &messageActor{} })
-	props := actor.FromProducer(func() actor.Actor { return &mainActor{} })
+	props := actor.FromProducer(newParentActor)
 	pid := actor.Spawn(props)
 
 	// A map for storing actors
@@ -134,13 +168,13 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-	for _, value := range hash {
-		result, _ := value.RequestFuture(&askForRows{test: 1}, 30*time.Second).Result() // await result
-		receivedCounter += result.(int)
-	}
+	// for _, value := range hash {
+	// 	result, _ := value.RequestFuture(&askForRows{test: 1}, 30*time.Second).Result() // await result
+	// 	receivedCounter += result.(int)
+	// }
 
 	fmt.Println("Allt är skickat!")
 	// fmt.Scanln()
-	fmt.Printf("Sent: %v\nCreated keys: %v\nReceived: %v",
-		sentCounter, createdKeys, receivedCounter)
+	// fmt.Printf("Sent: %v\nCreated keys: %v\nReceived: %v",
+	// 	sentCounter, createdKeys, receivedCounter)
 }
